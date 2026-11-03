@@ -8,12 +8,14 @@ param location string = resourceGroup().location
 
 param containerName string = 'filevault'
 
+param tags object = {}
+
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
   location: location
   kind: 'StorageV2'
   sku: { name: 'Standard_LRS' }
-  tags: { purpose: 'asb-storage-sample', environment: 'devtest' }
+  tags: union({ purpose: 'asb-storage-sample', environment: 'devtest' }, tags)
   properties: {
     accessTier: 'Hot'
     allowBlobPublicAccess: false

@@ -17,6 +17,30 @@
       "assets/filevault-preview.png"
     ]
   },
+  "optionalAzdPath": {
+    "cloudQualified": false,
+    "customerSource": "Committed GitHub source only",
+    "azdVersionObserved": "1.29.0",
+    "lifecycle": {
+      "upWorkflow": ["provision", "hooks run predeploy"],
+      "redeployCommand": "azd hooks run predeploy",
+      "explicitHookExitCode": 0,
+      "nativeEmptyServiceDeployExitCode": 1,
+      "nativeDeployHooksExecuted": false,
+      "isolation": "Fresh credential/config stores; rejecting loopback proxy; all attempted requests blocked",
+      "explicitHookBlockedHosts": ["aka.ms"],
+      "nativeDeployBlockedHosts": ["aka.ms", "login.microsoftonline.com"]
+    },
+    "localChecks": ["Pinned azd schema", "Bicep compilation and emitted resource inspection", "PowerShell parser and mocked recovery/guard checks"],
+    "livePrerequisitesNotExecuted": ["Builder CLI 0.0.2", "Azure provisioning", "GitHub authorization/deployment", "Reprovision/redeploy preservation", "Protected visitor and managed-identity Blob CRUD", "Owned-RG teardown"],
+    "handoff": {
+      "hookExitCode": 3,
+      "deploymentStatus": "Succeeded",
+      "healthStatus": "AwaitingInteractiveVerification",
+      "crudStatus": "NotRun"
+    },
+    "crossPlatform": "Common PowerShell 7 implementation; macOS observed, Windows/Linux not executed"
+  },
   "hostedBuilderQualification": {
     "qualified": true,
     "managedIdentityStorageOperationsVerified": true,

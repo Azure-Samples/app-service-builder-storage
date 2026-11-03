@@ -3,3 +3,4 @@ dist/
 .builder-output/
 .env
 .playwright-mcp/
+.azure/

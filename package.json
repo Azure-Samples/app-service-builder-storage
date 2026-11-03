@@ -11,6 +11,7 @@
     "build:builder": "node scripts/build.js",
     "start": "node server/index.js",
     "test": "node --test test/*.test.js",
+    "test:azd": "pwsh -NoLogo -NoProfile -File test/azd/hooks.Tests.ps1 && node --test test/azd/*.test.js",
     "verify:storage": "node scripts/verify-storage.js"
   },
   "devDependencies": {

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": { "value": "${AZURE_ENV_NAME}" },
+    "location": { "value": "${AZURE_LOCATION}" },
+    "storageLocation": { "value": "${STORAGE_LOCATION}" },
+    "resourceGroupName": { "value": "${AZURE_RESOURCE_GROUP}" },
+    "appName": { "value": "${BUILDER_APP_NAME}" },
+    "storageAccountName": { "value": "${AZURE_STORAGE_ACCOUNT}" },
+    "ownerId": { "value": "${FILEVAULT_OWNER_ID}" },
+    "builderProvisionMode": { "value": "${BUILDER_PROVISION_MODE}" },
+    "existingPrincipalId": { "value": "${BUILDER_APP_PRINCIPAL_ID}" }
+  }
+}

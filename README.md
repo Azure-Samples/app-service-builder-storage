@@ -85,7 +85,168 @@ Use your subscription explicitly in **every Azure command**. Shell placeholders
 below refer only to your newly created test resources; do not reuse or modify
 production resources.
 
-## 1. Provision the Blob dependency
+## Optional: Quick deploy with azd (not yet cloud-qualified)
+
+This additional path keeps the manual steps below available. It provisions a
+**new, dedicated environment resource group** with the same private Storage
+module, a system-assigned Builder identity, and a container-scoped data role.
+PowerShell hooks then configure required Entra sign-in and connect your pushed
+GitHub source. There is no native azd Builder host, App Service substitution,
+ZIP upload, or automatic GitHub-push deployment.
+
+**Validation boundary:** local Bicep compilation, schema checks, mocked hook/
+recovery checks, and a real isolated azd lifecycle fixture passed. The fixture
+uses empty credential stores and a rejecting loopback proxy; it performs no
+Azure authentication or deployment. The complete `azd up` workflow, GitHub
+authorization, provision/reprovision, protected hosted CRUD, and `azd down`
+remain untested against Azure. The earlier hosted ZIP evidence does not qualify
+this path. Do not treat this section as an already verified one-command rollout.
+
+### Tools and interactive inputs
+
+Use an ordinary interactive terminal with Node.js 24, Git, GitHub CLI (`gh`),
+Azure CLI with working Bicep, **azd 1.29.0**, PowerShell **7.4+** (`pwsh`), and a
+compatible **Builder CLI 0.0.2 or newer** with the documented `--name` and
+`--repository-id` flags. The hooks accept azd `>=1.29.0,<2.0.0`; only 1.29.0
+has the real local lifecycle evidence. Local authoring checks used PowerShell
+7.5.2, Azure CLI 2.87.0, Bicep 0.46.1, GitHub CLI 2.102.1 and Node 24.8.0.
+Those are observed versions, not experimentally established minima for every
+tool. Installed Builder 0.0.1 was incompatible; 0.0.2 command/JSON contracts
+were checked against maintained documentation and mocks, not executed live.
+No hook installs or upgrades software.
+
+First fork/copy the complete sample, clone it, and push the source and root
+`builder.yaml` to your chosen branch. From that checkout:
+
+```shell
+azd auth login
+az login --tenant "<tenant-id>"
+builder login --tenant "<tenant-id>"
+gh auth login --hostname github.com
+azd env new "<lowercase-environment-name>"
+azd env set AZURE_SUBSCRIPTION_ID "<devtest-subscription-id>"
+azd env set AZURE_TENANT_ID "<tenant-id>"
+azd env set AZURE_LOCATION "<supported-builder-region>"
+azd env set STORAGE_LOCATION "<supported-storage-region>"
+azd env set GITHUB_REPOSITORY "<your-account>/<your-repository>"
+azd env set GITHUB_REF_NAME "<your-pushed-branch>"
+azd env set GITHUB_ACCOUNT "<your-github-login>"
+azd env set BUILDER_ALLOWED_OBJECT_IDS "<visitor-object-id>[,<another-object-id>]"
+azd up
+```
+
+`azd env new` supplies `AZURE_ENV_NAME`. Use 2-32 lowercase letters/digits/
+hyphens, beginning with a letter. Select the same user and tenant for Azure
+CLI and Builder; the hook checks both selected identities. Select
+`GITHUB_ACCOUNT` as the active `gh` account. Azure management sign-in, Builder
+sign-in, GitHub account selection, GitHub App repository installation/SSO, and
+app-visitor Entra consent are separate human actions. The source hook runs
+`builder source login github --account ...` and the explicit source-connect
+command; review browser prompts yourself. No credentials or token caches
+should be copied into this repository or another browser. This path does not
+promise headless CI or Cloud Shell support.
+
+The allowlist contains **object IDs in the selected tenant**, not emails.
+Every allowed visitor shares the container. `GITHUB_SHA` is optional initially:
+the hook resolves the selected remote branch's full SHA and persists it.
+If you set it yourself, it must equal that branch's current pushed commit.
+The source root is always `.` and automatic deployment is disabled.
+
+### Lifecycle, outputs and recovery
+
+`azure.yaml` defines `azd up` as **`provision` then `hooks run predeploy`**.
+There are no services to restore/package. `azd provision` owns only
+infrastructure, identity/RBAC, required visitor policy and the three nonsecret
+server variables. It does not authorize GitHub source or deploy application
+code. The explicit `predeploy` hook performs source connection, exact-commit
+deployment, operation polling, active-version/source verification, and
+anonymous-protection checks.
+
+**Do not use bare `azd deploy` or `azd deploy --all`.** In the real zero-service
+1.29.0 fixture, native deploy attempted Azure login and failed before either
+deploy hook; explicit `azd hooks run predeploy` executed successfully. Source/
+schema review confirms the custom up workflow shape, not its live provisioning.
+
+On successful rollout, the hook records `BUILDER_DEPLOYMENT_STATUS=Succeeded`
+and `BUILDER_AUTH_STATUS=Applied`. It deliberately exits **3**, leaving
+`BUILDER_HEALTH_STATUS=AwaitingInteractiveVerification` and
+`FILEVAULT_CRUD_STATUS=NotRun`. This is a visible handoff, not a claim that 401
+or an activation check proves Blob access. Open `BUILDER_APP_URL`, sign in as
+an allowed visitor, review consent, then follow the real-operation checks below.
+Never suppress the hook failure and report the entire path as qualified.
+
+Selected nonsecret outputs are `AZURE_RESOURCE_GROUP`,
+`BUILDER_APP_NAME`, `BUILDER_APP_RESOURCE_ID`, `BUILDER_APP_PRINCIPAL_ID`,
+`BUILDER_APP_URL`, `BUILDER_APP_DEPLOYMENT_ID`, `BUILDER_APP_VERSION_ID`,
+`GITHUB_SHA`, `AZURE_STORAGE_ACCOUNT`, `AZURE_STORAGE_BLOB_ENDPOINT`,
+`AZURE_STORAGE_CONTAINER`, `STORAGE_CONTAINER_RESOURCE_ID`, and
+`STORAGE_ROLE_ASSIGNMENT_ID`. Infrastructure/source/deployment/auth/health/CRUD
+statuses are separate. Do not publish a full `azd env get-values` dump.
+
+For subsequent code changes, commit and push to the **same branch**, then:
+
+```shell
+azd env set GITHUB_SHA "<new-full-40-character-pushed-commit-sha>"
+azd hooks run predeploy
+```
+
+The hook preserves the owned app/identity/container role and existing source
+connection, retains unknown variable names without reading their values, and
+updates only `APP_ACCESS_MODE`, the Blob endpoint, and container. Repository,
+branch/root, identity, allowlist, ownership or storage-security/firewall drift
+stops instead of silently adopting, widening or overwriting resources.
+Rerunning `azd provision` skips the Builder resource PUT for an existing owned
+app, avoiding replacement of saved source and variables. Do not delete the
+ignored `.azure/<environment>/filevault-builder.json` ownership/operation
+receipt or move an environment to a different subscription.
+
+After an interrupted deployment, run `azd hooks run predeploy` again. Accepted
+operations resume their saved URL; a lost acceptance response replays only the
+same durable request ID/body, never an unrelated deployment. Timeout/throttling
+retains the receipt. A completed deployment with the same SHA only re-observes
+readiness; it does not reconnect, reconfigure or redeploy. Failed/canceled
+rollouts remain recorded; inspect their diagnostics before requesting another
+rollout. An old environment or unrelated existing RG is never adopted.
+
+A lost settings PATCH response is deliberately not treated as success based
+only on returned variable names. Inspect its saved `ConfigurationIntent`,
+resolve any outstanding operation, and verify that no other configuration
+writer is active. To approve replay of that exact nonsecret intent:
+
+```shell
+azd env set FILEVAULT_RECONCILE_CONFIGURATION "<ConfigurationIntent.Id-from-receipt>"
+azd hooks run postprovision
+azd hooks run predeploy
+```
+
+Recovery refuses a changed variable-name inventory. It replays the saved
+values rather than guessing them; the acknowledgment cannot authorize a future
+intent with another ID. Missing/foreign receipts or other drift require human
+reconciliation, not deleting state and retrying against existing resources.
+
+### Guarded cleanup and local checks
+
+`azd down` is **destructive**: it removes the whole generated RG, the app,
+Storage, container/files, container role and deployment records. It leaves your
+GitHub repository/installation and externally owned resources alone. Never
+reuse this RG for other work. The predown hook verifies receipt/context,
+the exact latest native azd deployment ID/hash and ownership parameters,
+recursively checks nested deployment resources, and rejects foreign resources
+in the RG. Unresolved deployment outcomes or ambiguous/incomplete inventories
+block cleanup. It requires the exact RG name in a human terminal **before**
+azd's normal deletion confirmation; review that native scope again. No delete
+occurs in predown. Do not use `--force`, `--purge`, automatic confirmations or
+run cleanup in noninteractive mode. Down remains locally tested only.
+
+`npm run test:azd` runs offline PowerShell recovery/guard checks and the shared
+real azd fixture; normal `npm test` does not require these optional tools.
+The common PowerShell implementation is intended for macOS/Linux/Windows, but
+only macOS execution has been observed. Live qualification still needs an
+approved dedicated DEV/TEST environment, compatible CLI, real GitHub source
+authorization, reprovision/redeploy preservation checks, human visitor/Blob
+operations, and a separately approved owned-RG cleanup.
+
+## 1. Provision the Blob dependency (manual path)
 
 ```bash
 SUBSCRIPTION="<your-approved-devtest-subscription-id>"
