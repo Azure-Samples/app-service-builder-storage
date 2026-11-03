@@ -45,7 +45,8 @@ test('real azd executes an explicit project hook without services or network', {
   await writeFile(path.join(project, 'azure.yaml'), JSON.stringify({
     name: 'shopstream-offline-fixture',
     services: {},
-    hooks: { predeploy: hook('predeploy'), postdeploy: hook('postdeploy') },
+    workflows: { up: { steps: [{ azd: 'hooks run preprovision' }, { azd: 'hooks run predeploy' }] } },
+    hooks: { preprovision: hook('preprovision'), predeploy: hook('predeploy'), postdeploy: hook('postdeploy') },
   }));
   const proxyUrl = `http://127.0.0.1:${proxy.address().port}`;
   const env = {
@@ -76,9 +77,19 @@ test('real azd executes an explicit project hook without services or network', {
   assert.match(await readFile(marker, 'utf8'), /predeploy/);
   const explicitRequests = [...requests];
   await writeFile(marker, '');
+  const up = await run(['up']);
+  const upEvents = await readFile(marker, 'utf8');
+  if (up.code === 0) {
+    assert.equal(upEvents, 'preprovision\npredeploy\n');
+  } else {
+    assert.equal(upEvents, '');
+    assert.match(up.stdout + up.stderr, /error executing step command 'auth login'/);
+    t.diagnostic('Native up also requires Azure authentication before its custom workflow; live execution remains separate.');
+  }
+  await writeFile(marker, '');
   const deploy = await run(['deploy', '--all']);
   const events = await readFile(marker, 'utf8');
-  t.diagnostic(JSON.stringify({ explicitHook: explicit.code, emptyServiceDeploy: deploy.code,
+  t.diagnostic(JSON.stringify({ explicitHook: explicit.code, hookWorkflow: up.code, emptyServiceDeploy: deploy.code,
     predeploy: events.includes('predeploy'), postdeploy: events.includes('postdeploy'),
     explicitBlockedHosts: [...new Set(explicitRequests)], blockedHosts: [...new Set(requests)] }));
   if (deploy.code !== 0 || !events.includes('postdeploy')) {

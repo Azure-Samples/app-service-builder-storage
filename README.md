@@ -111,8 +111,10 @@ compatible **Builder CLI 0.0.2 or newer** with the documented `--name` and
 has the real local lifecycle evidence. Local authoring checks used PowerShell
 7.5.2, Azure CLI 2.87.0, Bicep 0.46.1, GitHub CLI 2.102.1 and Node 24.8.0.
 Those are observed versions, not experimentally established minima for every
-tool. Installed Builder 0.0.1 was incompatible; 0.0.2 command/JSON contracts
-were checked against maintained documentation and mocks, not executed live.
+tool. Previously installed Builder 0.0.1 was incompatible. The official
+session-local 0.0.2 passed real preprovision capability/account checks and the
+authenticated infrastructure preview passed; source authorization and rollout
+remain unqualified.
 No hook installs or upgrades software.
 
 First fork/copy the complete sample, clone it, and push the source and root
@@ -154,7 +156,10 @@ The source root is always `.` and automatic deployment is disabled.
 
 ### Lifecycle, outputs and recovery
 
-`azure.yaml` defines `azd up` as **`provision` then `hooks run predeploy`**.
+`azure.yaml` defines `azd up` as **`hooks run preprovision` then `provision`
+then `hooks run predeploy`**. The first hook initializes the owned resource
+names before native azd resolves Bicep parameters. Native `provision` also
+retains its preprovision check; it safely reuses the same ownership receipt.
 There are no services to restore/package. `azd provision` owns only
 infrastructure, identity/RBAC, required visitor policy and the three nonsecret
 server variables. It does not authorize GitHub source or deploy application
@@ -168,6 +173,26 @@ or cookies, and never follow a sign-in redirect.
 1.29.0 fixture, native deploy attempted Azure login and failed before either
 deploy hook; explicit `azd hooks run predeploy` executed successfully. Source/
 schema review confirms the custom up workflow shape, not its live provisioning.
+The unauthenticated custom-up fixture also stops at Azure login before its
+workflow; it does not prove bootstrap ordering in a signed-in cloud run.
+
+For a standalone infrastructure preview or provisioning command, initialize
+the derived parameters explicitly first:
+
+```shell
+azd hooks run preprovision
+azd provision --preview
+# After reviewing the preview:
+azd provision
+```
+
+If azd cannot find a subscription that the correctly selected Azure CLI user
+can access, its subscription cache may be stale. Use `azd auth login` yourself,
+or select the existing Azure CLI session with an isolated azd configuration:
+set `AZD_CONFIG_DIR` to a new private local directory, run
+`azd config set auth.useAzCliAuth true`, and retain that same directory for
+subsequent commands. This does not sign in, change Azure permissions or copy
+credentials. Select the intended subscription and tenant before retrying.
 
 On successful rollout, the hook records `BUILDER_DEPLOYMENT_STATUS=Succeeded`
 and `BUILDER_AUTH_STATUS=Applied`. It deliberately exits **3**, leaving

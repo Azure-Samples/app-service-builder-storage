@@ -8,6 +8,7 @@ infra:
 workflows:
   up:
     steps:
+      - azd: hooks run preprovision
       - azd: provision
       - azd: hooks run predeploy
 hooks:

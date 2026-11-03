@@ -128,6 +128,11 @@ function Compatible-Tools {
 }
 
 try {
+    Check 'up initializes derived parameters before native provision' {
+        $manifest = Get-Content "$PSScriptRoot/../../azure.yaml" -Raw
+        Expect ($manifest -match 'up:\s*steps:\s*- azd: hooks run preprovision\s*- azd: provision\s*- azd: hooks run predeploy') 'Bootstrap must precede native Bicep parameter resolution.'
+        Expect ($manifest -match 'preprovision:\s*shell: pwsh\s*run: ./scripts/azd.ps1 preprovision') 'Direct provision must retain its preflight hook.'
+    }
     Check 'parser has no errors' {
         $tokens = $null; $errors = $null
         $null = [Management.Automation.Language.Parser]::ParseFile("$PSScriptRoot/../../scripts/azd.ps1", [ref] $tokens, [ref] $errors)
