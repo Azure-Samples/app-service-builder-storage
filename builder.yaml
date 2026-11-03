@@ -1,0 +1,22 @@
+name: filevault
+components:
+  - name: frontend
+    role: static
+    platform: nodejs
+    platformVersion: "24"
+    rootDirectory: client
+    build: npm ci --include=dev && npm run build:builder
+    output: dist
+    path: /
+  - name: api
+    role: web
+    platform: nodejs
+    platformVersion: "24"
+    rootDirectory: server
+    build: npm ci --omit=dev && npm run build:builder
+    path: /api
+    run:
+      start: node index.js
+      port: 8080
+      healthCheckPath: /api/health
+      healthCheckStatusCodes: [200]

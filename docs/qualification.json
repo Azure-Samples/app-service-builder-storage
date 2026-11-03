@@ -1,0 +1,92 @@
+{
+  "date": "2026-11-03",
+  "runtime": "Node.js 24",
+  "frontendBuild": "Vite 8",
+  "localEvidence": {
+    "databaseEmulator": false,
+    "storage": "Real private Azure Blob container",
+    "credential": "DefaultAzureCredential (local developer)",
+    "packaging": "Independent client Vite static output and server generic Node API output with production dependencies",
+    "apiOperations": ["bounded list", "multipart upload", "prefix list", "byte-exact download", "delete", "confirm deleted"],
+    "browser": "Installed Microsoft Edge",
+    "uiOperations": ["two-file upload", "listing", "PNG preview", "download", "delete", "empty listing"],
+    "syntheticTestBlobsRemaining": 0,
+    "screenshots": [
+      "assets/filevault-browser.png",
+      "assets/filevault-upload.png",
+      "assets/filevault-preview.png"
+    ]
+  },
+  "hostedBuilderQualification": {
+    "qualified": true,
+    "managedIdentityStorageOperationsVerified": true,
+    "runtimeUrl": "https://asb-filevault-test-20261103-f9b700e6.app.eastus2.builderapps.dev",
+    "region": "eastus2",
+    "deployedSourceCommit": "e06a2d0c6eb88536fd67ab493c72c671a2f83352",
+    "sourceArchiveSha256": "2521195bec82e53c7bf339c1f7608e314766bf0e034a5145547010a635d9b57d",
+    "deploymentId": "dep_20261103_ef7a7522fce0",
+    "versionId": "ver_20261103_ef7a7522fce0",
+    "deploymentSucceededAt": "2026-11-03T15:50:47.0386479Z",
+    "deploymentMethod": "Separately approved temporary ARM ZIP test; not the published onboarding path",
+    "githubSourceOnboardingVerified": false,
+    "publication": "Fork-based contribution to Azure-Samples/app-service-builder-storage, based on destination main without legacy history. Hosted qualification is independent of GitHub-source onboarding.",
+    "deployedSourceCommitLocation": "Retained local validation snapshot, not a canonical Azure-Samples commit",
+    "components": [
+      { "name": "frontend", "role": "static", "root": "client", "path": "/" },
+      { "name": "api", "role": "web", "root": "server", "path": "/api", "healthCheckPath": "/api/health" }
+    ],
+    "authentication": {
+      "mode": "Required Entra sign-in",
+      "allowedVisitors": "Exact approved tester object ID and tenant allowlist",
+      "policyRevision": 1,
+      "appliedRevision": 1,
+      "propagationPending": false,
+      "consent": "Human reviewed and clicked Allow; no credential/cookie transfer",
+      "anonymousRootStatus": 401,
+      "anonymousFilesStatus": 401,
+      "syntheticSpoofedPrincipalStatus": 401
+    },
+    "storage": {
+      "identity": "System-assigned managed identity",
+      "credential": "ManagedIdentityCredential",
+      "role": "Storage Blob Data Contributor",
+      "roleScope": "Private filevault container only",
+      "sharedKeyAccess": false,
+      "anonymousBlobAccess": false
+    },
+    "browser": "Installed Microsoft Edge 156",
+    "authenticatedOperations": [
+      "bounded list",
+      "two-file UI multipart upload",
+      "prefix list",
+      "one-item continuation-token pagination",
+      "byte-exact PNG and text downloads",
+      "PNG inline preview with correct bytes and decoded image",
+      "browser download",
+      "delete both synthetic files",
+      "empty listing and 404 downloads after deletion"
+    ],
+    "operationChecksCompletedAt": "2026-11-03T15:56:34.799Z",
+    "invalidPageSizeStatus": 400,
+    "missingMutationHeaderStatus": 403,
+    "cleanupVerifiedAt": "2026-11-03T15:59:51.911Z",
+    "syntheticTestBlobsRemaining": 0,
+    "screenshots": [
+      "assets/filevault-hosted-browser.png",
+      "assets/filevault-hosted-upload.png",
+      "assets/filevault-hosted-preview.png"
+    ],
+    "previousFailedAttempt": {
+      "deploymentId": "dep_20261103_788f4c181e89",
+      "status": "ValidationFailed",
+      "diagnosedCause": "Combined Vite/Express component declared role web and run; fixed by isolated static frontend and generic Node API roots",
+      "receipts": "Preserved separately; successful retry did not overwrite the failed attempt"
+    },
+    "notQualified": [
+      "GitHub-source onboarding",
+      "user-assigned identity alternative",
+      "different preview regions or runtimes",
+      "production readiness"
+    ]
+  }
+}
