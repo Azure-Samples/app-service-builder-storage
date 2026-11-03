@@ -1,8 +1,10 @@
 targetScope = 'subscription'
 
 param environmentName string
-param location string
-param storageLocation string
+@description('Builder region. West US 2 is the public customer region.')
+param location string = 'westus2'
+@description('Storage region. West US 2 is the public customer region.')
+param storageLocation string = 'westus2'
 param resourceGroupName string
 param appName string
 param storageAccountName string

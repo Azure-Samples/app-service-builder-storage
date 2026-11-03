@@ -1,7 +1,8 @@
 targetScope = 'resourceGroup'
 
 param name string
-param location string
+@description('Builder region. West US 2 is the public customer region.')
+param location string = 'westus2'
 param tags object
 
 resource app 'Microsoft.Web/builderApps@2026-09-01-preview' = {

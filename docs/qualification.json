@@ -2,6 +2,8 @@
   "date": "2026-11-03",
   "runtime": "Node.js 24",
   "frontendBuild": "Vite 8",
+  "publicCustomerRegion": "westus2",
+  "regionalEvidenceBoundary": "Existing East US 2 receipts and screenshots are internal test evidence, not West US 2 qualification or a public customer region option.",
   "localEvidence": {
     "databaseEmulator": false,
     "storage": "Real private Azure Blob container",
@@ -51,6 +53,7 @@
     "managedIdentityStorageOperationsVerified": true,
     "runtimeUrl": "https://asb-filevault-test-20261103-f9b700e6.app.eastus2.builderapps.dev",
     "region": "eastus2",
+    "regionScope": "Explicit internal qualification only; public customers target West US 2.",
     "deployedSourceCommit": "e06a2d0c6eb88536fd67ab493c72c671a2f83352",
     "sourceArchiveSha256": "2521195bec82e53c7bf339c1f7608e314766bf0e034a5145547010a635d9b57d",
     "deploymentId": "dep_20261103_ef7a7522fce0",

@@ -3,8 +3,8 @@ targetScope = 'resourceGroup'
 @description('Globally unique storage account name: 3-24 lowercase letters and digits.')
 param storageAccountName string
 
-@description('Storage region, chosen independently from the Builder app region.')
-param location string = resourceGroup().location
+@description('Storage region. West US 2 is the public customer region.')
+param location string = 'westus2'
 
 param containerName string = 'filevault'
 

@@ -69,10 +69,10 @@ retention, or production rate limiting.
 
 ## Prerequisites
 
-- Azure subscription authorized for the Builder preview and a supported app
-  region. Verify `Microsoft.Web/builderApps` locations and **Node.js 24 compute
-  activation** with your preview contact; a successful Node build is not proof
-  of target activation support.
+- Azure subscription authorized for Builder in **West US 2 (`westus2`)**, the
+  only public customer region. Verify `Microsoft.Web/builderApps` access and
+  **Node.js 24 compute activation** with your preview contact; a successful
+  Node build is not proof of target activation support.
 - Azure CLI with Bicep, Node.js 24 and npm for local development.
 - Permission to provision storage and a resource group; Owner, Role Based
   Access Control Administrator, or equivalent to assign container data roles.
@@ -128,8 +128,8 @@ gh auth login --hostname github.com
 azd env new "<lowercase-environment-name>"
 azd env set AZURE_SUBSCRIPTION_ID "<devtest-subscription-id>"
 azd env set AZURE_TENANT_ID "<tenant-id>"
-azd env set AZURE_LOCATION "<supported-builder-region>"
-azd env set STORAGE_LOCATION "<supported-storage-region>"
+azd env set AZURE_LOCATION westus2
+azd env set STORAGE_LOCATION westus2
 azd env set GITHUB_REPOSITORY "<your-account>/<your-repository>"
 azd env set GITHUB_REF_NAME "<your-pushed-branch>"
 azd env set GITHUB_ACCOUNT "<your-github-login>"
@@ -138,8 +138,11 @@ azd up
 ```
 
 `azd env new` supplies `AZURE_ENV_NAME`. Use 2-32 lowercase letters/digits/
-hyphens, beginning with a letter. Select the same user and tenant for Azure
-CLI and Builder; the hook checks both selected identities. Select
+hyphens, beginning with a letter. Builder and Storage default to `westus2`,
+the only public customer region. Earlier East US 2 evidence is
+an internal test, not West US 2 qualification or a customer region option.
+Select the same user and tenant for Azure CLI and Builder; the hook checks
+both selected identities. Select
 `GITHUB_ACCOUNT` as the active `gh` account. Azure management sign-in, Builder
 sign-in, GitHub account selection, GitHub App repository installation/SSO, and
 app-visitor Entra consent are separate human actions. The source hook runs
@@ -280,7 +283,7 @@ SUBSCRIPTION="<your-approved-devtest-subscription-id>"
 TENANT="<your-tenant-id>"
 RG="<new-test-resource-group>"
 STORAGE="<globally-unique-3-to-24-lowercase-alphanumeric-name>"
-STORAGE_LOCATION="<storage-supported-region>"
+STORAGE_LOCATION=westus2
 
 az login --tenant "$TENANT"
 az group create --subscription "$SUBSCRIPTION" --name "$RG" --location "$STORAGE_LOCATION"
@@ -349,9 +352,10 @@ In [App Service Builder Portal](https://builder.appservice.azure.com/):
 1. Create an app from your repository using **Let Builder handle it**. Authorize
    only that repository for the Builder GitHub App, including organization/SSO
    approvals when required. Keep the source folder at repository root (`.`).
-2. Select your explicitly approved subscription, test resource group and a
-   **supported Builder app region**, independently of the group's metadata
-   region and storage location. Verify Node.js 24 compute support there.
+2. Select your explicitly approved subscription, test resource group and
+   **West US 2 (`westus2`)**, the only public customer region. Provision Storage
+   there as shown above, and verify Node.js 24 compute support for your
+   subscription.
 3. In Access, require work-account sign-in and add the app's system-assigned
    managed identity. In Authentication, use **Required** sign-in and Entra
    **Limit to specific identities**, with your tenant ID plus explicit allowed

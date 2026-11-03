@@ -8,7 +8,7 @@ $passed = 0
 function Reset-Fixture {
     $script:Context = @{
         Environment = 'offline'; Subscription = '11111111-1111-4111-8111-111111111111'
-        Tenant = '22222222-2222-4222-8222-222222222222'; Location = 'eastus2'; StorageLocation = 'eastus2'
+        Tenant = '22222222-2222-4222-8222-222222222222'; Location = 'westus2'; StorageLocation = 'westus2'
         Repository = 'example/filevault'; Branch = 'main'; Account = 'sample-user'; RepositoryId = '12345'
         Commit = 'a' * 40; Allowed = @('33333333-3333-4333-8333-333333333333')
         Directory = $fixture; StatePath = Join-Path $fixture 'receipt.json'
@@ -62,7 +62,7 @@ function App {
         sourceIntegrationState = 'Configured'
         source = @{ provider = 'GitHub'; id = '12345'; displayName = 'example/filevault'; reference = 'main'; rootDirectory = '.'; autoDeploy = $false }
         versionConfiguration = @{ variables = @(@{ name = 'CUSTOM_SETTING' }, @{ name = 'APP_ACCESS_MODE' }) }
-        runtime = @{ activeDeploymentId = 'dep_offline'; activeAppVersionId = 'ver_offline'; url = 'https://fv-offline.app.eastus2.builderapps.dev' }
+        runtime = @{ activeDeploymentId = 'dep_offline'; activeAppVersionId = 'ver_offline'; url = 'https://fv-offline.app.westus2.builderapps.dev' }
     }
     return $app
 }
@@ -79,7 +79,7 @@ function Provision-Reads {
         param($method, $path)
         Expect ($method -eq 'GET') 'Preprovision may not write ARM resources.'
         if ($path -like '*/providers/Microsoft.Web') { return @{ Status = 200; Body = @{ registrationState = 'Registered'
-            resourceTypes = @(@{ resourceType = 'builderApps'; apiVersions = @('2026-09-01-preview'); locations = @('East US 2') }) } } }
+            resourceTypes = @(@{ resourceType = 'builderApps'; apiVersions = @('2026-09-01-preview'); locations = @('West US 2') }) } } }
         if ($script:Absent) { return @{ Status = 404; Body = @{} } }
         if ($path -eq (Get-GroupPath)) { return @{ Status = 200; Body = Owned (Get-GroupPath) } }
         if ($path -eq (Get-AppPath)) { return @{ Status = 200; Body = App } }
@@ -128,6 +128,40 @@ function Compatible-Tools {
 }
 
 try {
+    Check 'customer regions default to West US 2 and internal overrides require explicit admission' {
+        $values = @{
+            AZURE_ENV_NAME = $script:Context.Environment; AZURE_SUBSCRIPTION_ID = $script:Context.Subscription
+            AZURE_TENANT_ID = $script:Context.Tenant; AZURE_LOCATION = $null; STORAGE_LOCATION = $null
+            GITHUB_REPOSITORY = $script:Context.Repository; GITHUB_REF_NAME = $script:Context.Branch
+            GITHUB_ACCOUNT = $script:Context.Account; BUILDER_ALLOWED_OBJECT_IDS = $script:Context.Allowed[0]
+            GITHUB_SHA = $null; AZURE_RESOURCE_GROUP = $null; BUILDER_APP_NAME = $null
+            AZURE_STORAGE_ACCOUNT = $null; SAMPLE_INTERNAL_TEST_ALLOW_EASTUS2 = $null; GH_HOST = 'github.com'
+        }
+        $saved = @{}
+        try {
+            foreach ($key in $values.Keys) {
+                $saved[$key] = [Environment]::GetEnvironmentVariable($key)
+                [Environment]::SetEnvironmentVariable($key, $values[$key])
+            }
+            $ctx = Get-Context
+            Expect ($ctx.Location -ceq 'westus2' -and $ctx.StorageLocation -ceq 'westus2')
+            $env:STORAGE_LOCATION = 'eastus2'
+            Rejects { Get-Context } 'only public customer region'
+            $env:AZURE_LOCATION = 'eastus2'; $env:STORAGE_LOCATION = 'eastus2'
+            Rejects { Get-Context } 'only public customer region'
+            $env:SAMPLE_INTERNAL_TEST_ALLOW_EASTUS2 = 'true'
+            $ctx = Get-Context
+            Expect ($ctx.Location -ceq 'eastus2' -and $ctx.StorageLocation -ceq 'eastus2')
+            $env:STORAGE_LOCATION = 'westus'
+            Rejects { Get-Context } 'only public customer region'
+            Expect ($script:Calls.Count -eq 0)
+        } finally {
+            foreach ($key in $saved.Keys) {
+                if ($null -eq $saved[$key]) { Remove-Item "Env:$key" -ErrorAction SilentlyContinue }
+                else { [Environment]::SetEnvironmentVariable($key, $saved[$key]) }
+            }
+        }
+    }
     Check 'up initializes derived parameters before native provision' {
         $manifest = Get-Content "$PSScriptRoot/../../azure.yaml" -Raw
         Expect ($manifest -match 'up:\s*steps:\s*- azd: hooks run preprovision\s*- azd: provision\s*- azd: hooks run predeploy') 'Bootstrap must precede native Bicep parameter resolution.'
@@ -192,7 +226,7 @@ try {
         $script:Http = {
             param($method, $path)
             if ($path -like '*/providers/Microsoft.Web') { return @{ Status = 200; Body = @{ registrationState = 'Registered'
-                resourceTypes = @(@{ resourceType = 'builderApps'; apiVersions = @('2026-09-01-preview'); locations = @('East US 2') }) } } }
+                resourceTypes = @(@{ resourceType = 'builderApps'; apiVersions = @('2026-09-01-preview'); locations = @('West US 2') }) } } }
             $foreign = Owned (Get-GroupPath); $foreign.tags.'filevault-owner' = 'foreign'
             return @{ Status = 200; Body = $foreign }
         }
@@ -363,10 +397,10 @@ try {
     Check 'HTTP 401 proves protection, never Blob readiness' {
         foreach ($status in @(401, 403, 302)) {
             $script:WebStatus = $status
-            Test-Anonymous 'https://fv-offline.app.eastus2.builderapps.dev'
+            Test-Anonymous 'https://fv-offline.app.westus2.builderapps.dev'
         }
         $script:WebStatus = 200
-        Rejects { Test-Anonymous 'https://fv-offline.app.eastus2.builderapps.dev' } 'not denied'
+        Rejects { Test-Anonymous 'https://fv-offline.app.westus2.builderapps.dev' } 'not denied'
         Rejects { Test-Anonymous 'https://evil.invalid' } 'runtime origin'
     }
     Check 'readiness outputs retain the deployed SHA and interactive qualification boundary' {

@@ -53,12 +53,20 @@ function Set-Output([string] $Name, [string] $Value) {
 function Get-Context {
     Assert-Condition (-not $env:GH_HOST -or $env:GH_HOST -ieq 'github.com') 'This source path requires github.com; do not authorize a different GitHub host.'
     $guid = '^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$'
+    $location = Get-Input 'AZURE_LOCATION' '^[a-z0-9]+$' -Optional
+    $storageLocation = Get-Input 'STORAGE_LOCATION' '^[a-z0-9]+$' -Optional
+    if (-not $location) { $location = 'westus2' }
+    if (-not $storageLocation) { $storageLocation = 'westus2' }
+    $internalEast = (Get-Input 'SAMPLE_INTERNAL_TEST_ALLOW_EASTUS2' '^(true|false)$' -Optional) -ceq 'true'
+    foreach ($region in @($location, $storageLocation)) {
+        Assert-Condition ($region -ceq 'westus2' -or ($internalEast -and $region -ceq 'eastus2')) 'West US 2 (westus2) is the only public customer region. Use westus2 for AZURE_LOCATION and STORAGE_LOCATION.'
+    }
     $ctx = @{
         Environment = Get-Input 'AZURE_ENV_NAME' '^[a-z][a-z0-9-]{1,31}$'
         Subscription = Get-Input 'AZURE_SUBSCRIPTION_ID' $guid
         Tenant = Get-Input 'AZURE_TENANT_ID' $guid
-        Location = Get-Input 'AZURE_LOCATION' '^[a-z0-9]+$'
-        StorageLocation = Get-Input 'STORAGE_LOCATION' '^[a-z0-9]+$'
+        Location = $location
+        StorageLocation = $storageLocation
         Repository = Get-Input 'GITHUB_REPOSITORY' '^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9_.-]{1,100}$'
         Branch = Get-Input 'GITHUB_REF_NAME'
         Account = Get-Input 'GITHUB_ACCOUNT' '^[A-Za-z0-9][A-Za-z0-9-]{0,38}$'
@@ -225,7 +233,7 @@ function Assert-Provider {
     $type = @($provider.resourceTypes | Where-Object resourceType -eq 'builderApps')
     Assert-Condition ($provider.registrationState -eq 'Registered' -and $type.Count -eq 1 -and
         $script:ApiVersion -in $type[0].apiVersions -and
-        $script:Context.Location -in @($type[0].locations | ForEach-Object { $_.Replace(' ', '').ToLowerInvariant() })) 'Builder provider/API/region is unavailable for this subscription. No registration or resource change was attempted.'
+        $script:Context.Location -in @($type[0].locations | ForEach-Object { $_.Replace(' ', '').ToLowerInvariant() })) 'Builder provider/API/region is unavailable for this subscription. The public customer region is West US 2 (westus2). No registration or resource change was attempted.'
 }
 
 function Invoke-Preprovision {
@@ -258,6 +266,7 @@ function Invoke-Preprovision {
     }
     else { Assert-Condition ($script:State.Infrastructure -eq 'NotProvisioned') 'Owned storage disappeared; do not recreate it automatically.' }
     foreach ($entry in @{
+        AZURE_LOCATION = $script:Context.Location; STORAGE_LOCATION = $script:Context.StorageLocation
         AZURE_RESOURCE_GROUP = $script:State.ResourceGroup; BUILDER_APP_NAME = $script:State.AppName
         AZURE_STORAGE_ACCOUNT = $script:State.StorageName; FILEVAULT_OWNER_ID = $script:State.Owner
         BUILDER_PROVISION_MODE = $mode; BUILDER_APP_PRINCIPAL_ID = $principal; GITHUB_SHA = $script:Context.Commit
