@@ -324,6 +324,7 @@ try {
         Rejects { Submit-OrResume } 'Lost response'
         Read-State
         Expect ($script:State.Intent.Status -eq 'Pending')
+        Expect ($script:Outputs.BUILDER_DEPLOYMENT_STATUS -eq 'Pending')
         Submit-OrResume
         Expect ($script:State.Intent.Status -eq 'Succeeded' -and $script:Attempt -eq 2)
         Expect (2 -in $script:Sleeps)
@@ -352,6 +353,7 @@ try {
         $script:Http = { @{ Status = 200; Body = @{ status = 'Failed' }; Headers = @{} } }
         Rejects { Submit-OrResume } 'Failed'
         Read-State; Expect ($script:State.Intent.Status -eq 'Failed')
+        Expect ($script:Outputs.BUILDER_DEPLOYMENT_STATUS -eq 'Failed')
     }
     Check 'HTTP 401 proves protection, never Blob readiness' {
         Test-Anonymous 'https://fv-offline.app.eastus2.builderapps.dev'

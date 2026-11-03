@@ -322,6 +322,8 @@ function Get-OwnedApp {
 
 function Invoke-Postprovision {
     Read-State
+    Set-Output 'BUILDER_INFRASTRUCTURE_STATUS' 'Checking'
+    Set-Output 'BUILDER_AUTH_STATUS' 'Checking'
     Assert-Owned (Read-Resource (Get-GroupPath) '2024-03-01') (Get-GroupPath)
     Assert-Storage (Read-Resource (Get-StoragePath) '2023-05-01')
     $app = Get-OwnedApp
@@ -338,8 +340,9 @@ function Invoke-Postprovision {
     $script:State.ProvisioningTemplateHash = $deployment.properties.templateHash
     $script:State.Infrastructure = 'Provisioned'
     Save-State
-    Set-DesiredConfiguration $app
     Set-Output 'BUILDER_INFRASTRUCTURE_STATUS' 'Provisioned'
+    Set-DesiredConfiguration $app
+    Set-Output 'BUILDER_AUTH_STATUS' 'SavedAwaitingActivation'
 }
 
 function Assert-Source($App) {
@@ -380,6 +383,7 @@ function Wait-Deployment {
         if ($status -in @('Succeeded', 'Failed', 'Canceled')) {
             $script:State.Intent.Status = $status
             Save-State
+            Set-Output 'BUILDER_DEPLOYMENT_STATUS' $status
             Assert-Condition ($status -eq 'Succeeded') "Builder deployment $status. Inspect its saved operation/deployment ID; repair requires an explicit new request."
             return
         }
@@ -390,6 +394,7 @@ function Wait-Deployment {
 }
 
 function Submit-OrResume {
+    Set-Output 'BUILDER_DEPLOYMENT_STATUS' $script:State.Intent.Status
     if (-not $script:State.Intent.OperationUrl) {
         # A lost response replays only the identical, durable deployment intent.
         $null = Get-OwnedApp
@@ -404,6 +409,8 @@ function Submit-OrResume {
         $script:State.Intent.DeploymentId = $result.Body.deploymentId
         $script:State.Intent.Status = 'Accepted'
         Save-State
+        Set-Output 'BUILDER_APP_DEPLOYMENT_ID' $script:State.Intent.DeploymentId
+        Set-Output 'BUILDER_DEPLOYMENT_STATUS' 'Accepted'
         $delay = Get-RetryDelay $result
         Assert-Condition ($delay -le 1200) 'Operation retry interval exceeds this wait budget; resume the receipt later.'
         Start-Sleep -Seconds $delay
@@ -459,11 +466,15 @@ function Confirm-Readiness {
 
 function Invoke-Predeploy {
     Read-State
+    foreach ($name in @('BUILDER_SOURCE_STATUS', 'BUILDER_DEPLOYMENT_STATUS', 'BUILDER_AUTH_STATUS')) { Set-Output $name 'Checking' }
+    Set-Output 'BUILDER_HEALTH_STATUS' 'AwaitingInteractiveVerification'
+    Set-Output 'FILEVAULT_CRUD_STATUS' 'NotRun'
     Assert-Condition ($script:State.Infrastructure -eq 'Provisioned' -and $script:State.Configuration -eq 'Saved') 'Run azd provision and resolve configuration first.'
     $app = Get-OwnedApp
     if ($script:State.Intent -and $script:State.Intent.Status -in @('Pending', 'Accepted', 'Running')) {
         $script:Context.RepositoryId = $script:State.RepositoryId
         Assert-Source $app
+        Set-Output 'BUILDER_SOURCE_STATUS' 'Connected'
         Assert-Condition ($script:State.PolicyHash -ceq (Get-PolicyHash)) 'Do not change access rules while recovering an accepted deployment.'
         $policy = Invoke-Arm 'GET' "$(Get-AppPath)/authConfigs/current"
         Assert-Response $policy
@@ -489,6 +500,7 @@ function Invoke-Predeploy {
         $app = Get-OwnedApp
     }
     Assert-Source $app
+    Set-Output 'BUILDER_SOURCE_STATUS' 'Connected'
     $script:State.RepositoryId = $script:Context.RepositoryId
     $script:State.Intent = @{ RequestId = [Guid]::NewGuid().ToString(); Commit = $script:Context.Commit; Status = 'Pending'; Readiness = 'Pending' }
     Save-State
