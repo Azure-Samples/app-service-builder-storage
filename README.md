@@ -134,6 +134,7 @@ azd env set GITHUB_REPOSITORY "<your-account>/<your-repository>"
 azd env set GITHUB_REF_NAME "<your-pushed-branch>"
 azd env set GITHUB_ACCOUNT "<your-github-login>"
 azd env set BUILDER_ALLOWED_OBJECT_IDS "<visitor-object-id>[,<another-object-id>]"
+azd hooks run preprovision
 azd up
 ```
 
@@ -159,10 +160,16 @@ The source root is always `.` and automatic deployment is disabled.
 
 ### Lifecycle, outputs and recovery
 
-`azure.yaml` defines `azd up` as **`hooks run preprovision` then `provision`
-then `hooks run predeploy`**. The first hook initializes the owned resource
-names before native azd resolves Bicep parameters. Native `provision` also
-retains its preprovision check; it safely reuses the same ownership receipt.
+**Run `azd hooks run preprovision` before every `azd up` or `azd provision`,
+including previews.** Native azd initializes Bicep parameters before even
+entering a custom up workflow. A workflow hook alone cannot initialize a fresh
+environment or reliably refresh create-versus-reuse parameters before that
+initialization; do not fill generated names or ownership parameters manually.
+
+`azure.yaml` defines the up workflow as **`hooks run preprovision` then
+`provision` then `hooks run predeploy`**. Its first hook rechecks the owned
+parameters before the child provision command. Native `provision` also retains
+its preprovision check; both safely reuse the same ownership receipt.
 There are no services to restore/package. `azd provision` owns only
 infrastructure, identity/RBAC, required visitor policy and the three nonsecret
 server variables. It does not authorize GitHub source or deploy application
@@ -179,13 +186,14 @@ schema review confirms the custom up workflow shape, not its live provisioning.
 The unauthenticated custom-up fixture also stops at Azure login before its
 workflow; it does not prove bootstrap ordering in a signed-in cloud run.
 
-For a standalone infrastructure preview or provisioning command, initialize
-the derived parameters explicitly first:
+For standalone infrastructure commands, refresh the derived parameters before
+each native command, not just on the first run:
 
 ```shell
 azd hooks run preprovision
 azd provision --preview
 # After reviewing the preview:
+azd hooks run preprovision
 azd provision
 ```
 
@@ -225,8 +233,10 @@ connection, retains unknown variable names without reading their values, and
 updates only `APP_ACCESS_MODE`, the Blob endpoint, and container. Repository,
 branch/root, identity, allowlist, ownership or storage-security/firewall drift
 stops instead of silently adopting, widening or overwriting resources.
-Rerunning `azd provision` skips the Builder resource PUT for an existing owned
-app, avoiding replacement of saved source and variables. Do not delete the
+The explicit preprovision command refreshes reuse mode before native parameter
+resolution, so subsequent provision skips the Builder resource PUT for an
+existing owned app rather than replacing saved source and variables. Do not
+delete the
 ignored `.azure/<environment>/filevault-builder.json` ownership/operation
 receipt or move an environment to a different subscription.
 

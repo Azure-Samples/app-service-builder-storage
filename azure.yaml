@@ -6,6 +6,8 @@ infra:
   provider: bicep
   path: infra/azd
 workflows:
+  # Native up initializes Bicep before this workflow; run the explicit
+  # preprovision command before up to initialize/refresh owned parameters.
   up:
     steps:
       - azd: hooks run preprovision

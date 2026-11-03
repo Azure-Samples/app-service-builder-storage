@@ -88,7 +88,7 @@ function Get-Context {
 }
 
 function Read-State {
-    Assert-Condition (Test-Path -LiteralPath $script:Context.StatePath) 'Environment receipt missing. Run azd provision; do not adopt existing resources.'
+    Assert-Condition (Test-Path -LiteralPath $script:Context.StatePath) 'Environment receipt missing. Run azd hooks run preprovision before azd up/provision; do not adopt existing resources.'
     $state = Get-Content -LiteralPath $script:Context.StatePath -Raw | ConvertFrom-Json -AsHashtable
     Assert-Condition ($state.Schema -eq 1 -and $state.Owner -match '^[0-9a-f]{32}$') 'Invalid environment receipt; review it manually.'
     foreach ($key in @('Environment', 'Subscription', 'Tenant', 'Location', 'StorageLocation', 'Repository', 'Branch', 'Account')) {

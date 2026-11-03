@@ -25,13 +25,14 @@
     "azdVersionObserved": "1.29.0",
     "lifecycle": {
       "upWorkflow": ["hooks run preprovision", "provision", "hooks run predeploy"],
+      "requiredBeforeUpOrProvision": "azd hooks run preprovision",
       "redeployCommand": "azd hooks run predeploy",
       "explicitHookExitCode": 0,
       "nativeEmptyServiceDeployExitCode": 1,
       "nativeDeployHooksExecuted": false,
       "unauthenticatedCustomUpExitCode": 1,
       "unauthenticatedCustomUpHooksExecuted": false,
-      "nativeParameterInitialization": "Authenticated preview rejects missing derived appName before the native preprovision hook; explicit bootstrap restores inputs and preview passes",
+      "nativeParameterInitialization": "Authenticated provision and up resolve required Bicep parameters before native hooks or the custom up workflow; explicit preprovision is required before every up/provision, including previews. A fresh-input up prompt was canceled before resources, not filled manually.",
       "isolation": "Fresh credential/config stores; rejecting loopback proxy; all attempted requests blocked",
       "explicitHookBlockedHosts": ["aka.ms"],
       "nativeDeployBlockedHosts": ["aka.ms", "login.microsoftonline.com"]

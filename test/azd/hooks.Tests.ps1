@@ -162,10 +162,12 @@ try {
             }
         }
     }
-    Check 'up initializes derived parameters before native provision' {
+    Check 'customer entry bootstraps before up and workflow rechecks before provision' {
         $manifest = Get-Content "$PSScriptRoot/../../azure.yaml" -Raw
-        Expect ($manifest -match 'up:\s*steps:\s*- azd: hooks run preprovision\s*- azd: provision\s*- azd: hooks run predeploy') 'Bootstrap must precede native Bicep parameter resolution.'
+        Expect ($manifest -match 'up:\s*steps:\s*- azd: hooks run preprovision\s*- azd: provision\s*- azd: hooks run predeploy') 'Workflow must recheck preflight before provisioning and deployment.'
         Expect ($manifest -match 'preprovision:\s*shell: pwsh\s*run: ./scripts/azd.ps1 preprovision') 'Direct provision must retain its preflight hook.'
+        $readme = Get-Content "$PSScriptRoot/../../README.md" -Raw
+        Expect ($readme -match 'azd env set BUILDER_ALLOWED_OBJECT_IDS[^\r\n]*\r?\nazd hooks run preprovision\r?\nazd up') 'Customer setup must initialize parameters BEFORE native up.'
     }
     Check 'parser has no errors' {
         $tokens = $null; $errors = $null
