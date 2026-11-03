@@ -580,8 +580,11 @@ function Get-CleanupDeployment {
     $selected = $null
     foreach ($item in ($all | Sort-Object { $_.properties.timestamp } -Descending)) {
         if ($item.properties.provisioningState -notin @('Succeeded', 'Failed')) { continue }
-        if (($item.tags.'azd-env-name' -ceq $script:Context.Environment -and -not $item.tags.ContainsKey('azd-layer-name')) -or
-            $item.name -ceq $script:Context.Environment) { $selected = $item; break }
+        $rootLayer = $null -eq $item.tags -or -not $item.tags.ContainsKey('azd-layer-name') -or $item.tags.'azd-layer-name' -ceq ''
+        $hasEnvironmentTag = $null -ne $item.tags -and $item.tags.ContainsKey('azd-env-name')
+        $matchesEnvironment = if ($hasEnvironmentTag) { $item.tags.'azd-env-name' -ceq $script:Context.Environment }
+            else { $item.name -ceq $script:Context.Environment }
+        if ($rootLayer -and $matchesEnvironment) { $selected = $item; break }
     }
     Assert-Condition ($null -ne $selected) 'No unambiguous azd deployment for this environment; cleanup is blocked.'
     $deployment = Read-Resource $selected.id '2022-09-01'

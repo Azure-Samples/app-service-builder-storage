@@ -97,10 +97,12 @@ ZIP upload, or automatic GitHub-push deployment.
 **Validation boundary:** local Bicep compilation, schema checks, mocked hook/
 recovery checks, and a real isolated azd lifecycle fixture passed. The fixture
 uses empty credential stores and a rejecting loopback proxy; it performs no
-Azure authentication or deployment. The complete `azd up` workflow, GitHub
-authorization, provision/reprovision, protected hosted CRUD, and `azd down`
-remain untested against Azure. The earlier hosted ZIP evidence does not qualify
-this path. Do not treat this section as an already verified one-command rollout.
+Azure authentication or deployment. Native infrastructure provisioning and
+read-only ownership/RBAC graph checks also passed in an explicit internal
+East US 2 test; that is not West US 2 qualification. The complete `azd up`
+workflow, GitHub authorization, reprovision preservation, protected hosted CRUD,
+and `azd down` remain unqualified. The earlier hosted ZIP evidence does not
+qualify this path. Do not treat this section as an already verified one-command rollout.
 
 ### Tools and interactive inputs
 

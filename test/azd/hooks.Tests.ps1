@@ -433,6 +433,54 @@ try {
         Expect ($script:Calls.Count -gt 1)
         Expect (@($script:Calls | Where-Object Method -ne 'GET').Count -eq 0)
     }
+    Check 'native present-empty root layer matches without weakening ownership guards' {
+        $script:Http = {
+            param($method, $path)
+            $d = Deployment
+            $d.tags.'azd-layer-name' = ''
+            $d.tags.'azd-provision-param-hash' = 'native-hash'
+            if ($path -match '/deployments$') { return @{ Status = 200; Body = @{ value = @($d) } } }
+            return @{ Status = 200; Body = $d }
+        }
+        Expect ((Get-CleanupDeployment).id -like '*offline-123')
+    }
+    Check 'native and legacy root selection reject nonempty and null layer tags' {
+        foreach ($script:LayerValue in @('infra', ' ', $null)) {
+            foreach ($script:LegacyName in @($false, $true)) {
+                $script:Http = {
+                    $d = Deployment
+                    $d.tags.'azd-layer-name' = $script:LayerValue
+                    if ($script:LegacyName) { $d.name = $script:Context.Environment }
+                    return @{ Status = 200; Body = @{ value = @($d) } }
+                }
+                Rejects { Get-CleanupDeployment } 'unambiguous'
+            }
+        }
+    }
+    Check 'legacy exact name is accepted only when environment tag is absent' {
+        $script:Http = {
+            param($method, $path)
+            $d = Deployment
+            $d.name = $script:Context.Environment
+            $d.id = "/subscriptions/$($script:Context.Subscription)/providers/Microsoft.Resources/deployments/$($d.name)"
+            $d.tags = @{}
+            if ($path -match '/deployments$') { return @{ Status = 200; Body = @{ value = @($d) } } }
+            return @{ Status = 200; Body = $d }
+        }
+        Expect ((Get-CleanupDeployment).name -ceq $script:Context.Environment)
+    }
+    Check 'legacy exact name cannot bypass conflicting environment tags' {
+        foreach ($script:EnvironmentTag in @('foreign', '', $null)) {
+            $script:Http = {
+                $d = Deployment
+                $d.name = $script:Context.Environment
+                $d.tags.'azd-env-name' = $script:EnvironmentTag
+                $d.tags.'azd-layer-name' = ''
+                return @{ Status = 200; Body = @{ value = @($d) } }
+            }
+            Rejects { Get-CleanupDeployment } 'unambiguous'
+        }
+    }
     Check 'latest native cleanup deployment must match ownership parameters' {
         $script:Http = {
             param($method, $path)

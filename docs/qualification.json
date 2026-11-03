@@ -40,7 +40,19 @@
     "localChecks": ["Pinned azd schema", "Bicep compilation and emitted resource inspection", "PowerShell parser and mocked recovery/guard checks", "Real loopback anonymous HTTP 302 without redirect following, cookies, credentials or response-body buffering"],
     "builderCliVersionObserved": "0.0.2",
     "liveReadOnlyChecks": ["Official session-local Builder capability/account preflight", "Authenticated azd provision --preview", "Native missing-parameter ordering regression and explicit bootstrap recovery"],
-    "livePrerequisitesNotExecuted": ["Azure provisioning", "GitHub authorization/deployment", "Reprovision/redeploy preservation", "Protected visitor and managed-identity Blob CRUD", "Owned-RG teardown"],
+    "liveInfrastructure": {
+      "region": "eastus2",
+      "regionScope": "Explicit internal test only, not public West US 2 qualification",
+      "nativeProvisioningStatus": "Succeeded",
+      "identity": "SystemAssigned",
+      "role": "Storage Blob Data Contributor",
+      "roleScope": "Private filevault container only",
+      "postprovisionStatus": "Stopped before configuration on strict native root-layer discovery; repaired selector verified against the actual owned recursive graph read-only",
+      "nativeRootLayerTag": "Present with exact empty string",
+      "sourceIntegrationState": "NotConfigured",
+      "fullUpQualified": false
+    },
+    "livePrerequisitesNotExecuted": ["Postprovision policy/settings recovery", "GitHub authorization/deployment", "Reprovision/redeploy preservation", "Protected visitor and managed-identity Blob CRUD", "Owned-RG teardown"],
     "handoff": {
       "hookExitCode": 3,
       "deploymentStatus": "Succeeded",
