@@ -39,7 +39,7 @@ function Invoke-Tool($Name, $Arguments, [switch] $Interactive) {
     }
     return (& $script:Text $Name $Arguments)
 }
-function Invoke-WebRequest { return @{ StatusCode = $script:WebStatus } }
+function Invoke-AnonymousProbe { return $script:WebStatus }
 function Start-Sleep([int] $Seconds) { $script:Sleeps += $Seconds }
 function Expect($Value, $Message = 'Assertion failed') { if (-not $Value) { throw $Message } }
 function Rejects([scriptblock] $Body, [string] $Message) {
@@ -356,7 +356,10 @@ try {
         Expect ($script:Outputs.BUILDER_DEPLOYMENT_STATUS -eq 'Failed')
     }
     Check 'HTTP 401 proves protection, never Blob readiness' {
-        Test-Anonymous 'https://fv-offline.app.eastus2.builderapps.dev'
+        foreach ($status in @(401, 403, 302)) {
+            $script:WebStatus = $status
+            Test-Anonymous 'https://fv-offline.app.eastus2.builderapps.dev'
+        }
         $script:WebStatus = 200
         Rejects { Test-Anonymous 'https://fv-offline.app.eastus2.builderapps.dev' } 'not denied'
         Rejects { Test-Anonymous 'https://evil.invalid' } 'runtime origin'

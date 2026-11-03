@@ -31,7 +31,7 @@
       "explicitHookBlockedHosts": ["aka.ms"],
       "nativeDeployBlockedHosts": ["aka.ms", "login.microsoftonline.com"]
     },
-    "localChecks": ["Pinned azd schema", "Bicep compilation and emitted resource inspection", "PowerShell parser and mocked recovery/guard checks"],
+    "localChecks": ["Pinned azd schema", "Bicep compilation and emitted resource inspection", "PowerShell parser and mocked recovery/guard checks", "Real loopback anonymous HTTP 302 without redirect following, cookies, credentials or response-body buffering"],
     "livePrerequisitesNotExecuted": ["Builder CLI 0.0.2", "Azure provisioning", "GitHub authorization/deployment", "Reprovision/redeploy preservation", "Protected visitor and managed-identity Blob CRUD", "Owned-RG teardown"],
     "handoff": {
       "hookExitCode": 3,

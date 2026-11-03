@@ -161,6 +161,8 @@ server variables. It does not authorize GitHub source or deploy application
 code. The explicit `predeploy` hook performs source connection, exact-commit
 deployment, operation polling, active-version/source verification, and
 anonymous-protection checks.
+Anonymous probes are header-only, have a 30-second timeout, send no credentials
+or cookies, and never follow a sign-in redirect.
 
 **Do not use bare `azd deploy` or `azd deploy --all`.** In the real zero-service
 1.29.0 fixture, native deploy attempted Azure login and failed before either

@@ -418,14 +418,34 @@ function Submit-OrResume {
     Wait-Deployment
 }
 
+function Invoke-AnonymousProbe([string] $Url) {
+    $handler = [Net.Http.HttpClientHandler]::new()
+    $handler.AllowAutoRedirect = $false
+    $handler.UseCookies = $false
+    $handler.UseDefaultCredentials = $false
+    $client = [Net.Http.HttpClient]::new($handler)
+    $client.Timeout = [TimeSpan]::FromSeconds(30)
+    $request = $null
+    $response = $null
+    try {
+        $request = [Net.Http.HttpRequestMessage]::new([Net.Http.HttpMethod]::Get, $Url)
+        $response = $client.SendAsync($request, [Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
+        return [int] $response.StatusCode
+    } finally {
+        if ($response) { $response.Dispose() }
+        if ($request) { $request.Dispose() }
+        $client.Dispose()
+    }
+}
+
 function Test-Anonymous([string] $Url) {
     $uri = [Uri] $Url
     Assert-Condition ($uri.Scheme -eq 'https' -and $uri.Port -eq 443 -and -not $uri.UserInfo -and
         $uri.Host.EndsWith('.builderapps.dev') -and -not $uri.Query -and -not $uri.Fragment -and
         $uri.AbsolutePath -in @('', '/')) 'Unexpected runtime origin; do not send authentication or probe it.'
     foreach ($path in @('/', '/api/files')) {
-        $r = Invoke-WebRequest -Uri ($Url.TrimEnd('/') + $path) -TimeoutSec 30 -MaximumRedirection 0 -SkipHttpErrorCheck
-        Assert-Condition ([int] $r.StatusCode -in @(401, 403, 302)) 'Anonymous application access was not denied; stop before any storage mutation.'
+        $status = Invoke-AnonymousProbe ($Url.TrimEnd('/') + $path)
+        Assert-Condition ($status -in @(401, 403, 302)) 'Anonymous application access was not denied; stop before any storage mutation.'
     }
 }
 
