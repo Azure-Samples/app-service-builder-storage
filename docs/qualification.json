@@ -59,19 +59,40 @@
       },
       "configuredVariableNames": ["APP_ACCESS_MODE", "AZURE_STORAGE_BLOB_ENDPOINT", "AZURE_STORAGE_CONTAINER"],
       "nativeRootLayerTag": "Present with exact empty string",
-      "sourceIntegrationState": "NotConfigured",
+      "sourceIntegrationState": "Configured",
       "fullUpQualified": false
     },
     "liveSourceAccess": {
       "tool": "Official Builder CLI 0.0.2 doctor with explicit app and repository identity",
       "exitCode": 1,
+      "exitCodeBoundary": "Only expected missing app source before connection; installation and collaborator access passed",
       "githubCliTenantAndArmChecks": "Passed",
-      "sourceIntegrationState": "NotConfigured",
-      "sourceAccess": "The Embr GitHub App is not installed for the selected repository.",
-      "requiredAction": "Human review of GitHub App installation access for the approved test fork only",
+      "sourceIntegrationState": "NotConfigured at diagnostic time; subsequently connected",
+      "sourceAccess": "The Embr App installation and collaborator access are valid.",
+      "humanInstallationReviewCompleted": true,
       "sourceOrDeploymentWritesPerformed": false
     },
-    "livePrerequisitesNotExecuted": ["GitHub authorization/deployment", "Reprovision/redeploy preservation", "Protected visitor and managed-identity Blob CRUD", "Owned-RG teardown"],
+    "liveGitHubDeployment": {
+      "sourceIntegrationState": "Configured",
+      "commit": "b8a19b9f6558eda4f0b23e87e4d6540b817013b0",
+      "deploymentId": "dep_20261103_c10c3902731a",
+      "versionId": "ver_20261103_c10c3902731a",
+      "versionStatus": "ready",
+      "versionSourceRevisionVerified": true,
+      "deploymentStatus": "Failed",
+      "failureCode": "AppRuntimeIdentityMismatch",
+      "startedAt": "2026-11-03T22:30:21.1638934Z",
+      "completedAt": "2026-11-03T22:32:26.1325667Z",
+      "activeRuntime": false,
+      "systemAssignedPrincipalUnchanged": true,
+      "acceptedReceiptRecovery": {
+        "localWaitInterruptedOnly": true,
+        "sameRequestDeploymentCommitAndOperationResumed": true,
+        "actualDeploymentHistoryCount": 1,
+        "outcome": "Observed the same accepted operation fail; no duplicate deployment, no successful runtime recovery"
+      }
+    },
+    "livePrerequisitesNotExecuted": ["Successful GitHub runtime activation", "Connected-source reprovision/changed-SHA preservation", "Protected visitor and managed-identity Blob CRUD", "Owned-RG teardown"],
     "handoff": {
       "observed": false,
       "hookExitCode": 3,

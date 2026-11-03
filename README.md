@@ -100,10 +100,12 @@ uses empty credential stores and a rejecting loopback proxy; it performs no
 Azure authentication or deployment. Native infrastructure provisioning,
 postprovision policy/settings recovery, and ownership/RBAC graph checks also
 passed in an explicit internal East US 2 test; that is not West US 2
-qualification. Required sign-in is saved but awaits first activation. The
-official Builder diagnostic currently reports that the Embr GitHub App is not
-installed for the approved test fork; a human must review repository-scoped
-installation access before source connection or deployment. The complete `azd up`
+qualification. Human-reviewed GitHub App access and source connection now pass,
+and the exact pushed commit produced a ready immutable version. Runtime activation
+failed with service error `AppRuntimeIdentityMismatch`; the ARM system identity
+remained unchanged. Required sign-in is saved but awaits first activation. The
+accepted operation was resumed from its saved receipt without another deployment;
+observing its terminal failure is not successful runtime recovery. The complete `azd up`
 workflow, GitHub authorization, reprovision preservation, protected hosted CRUD,
 and `azd down` remain unqualified. The earlier hosted ZIP evidence does not
 qualify this path. Do not treat this section as an already verified one-command rollout.
