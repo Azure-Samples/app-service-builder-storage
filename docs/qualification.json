@@ -47,13 +47,33 @@
       "identity": "SystemAssigned",
       "role": "Storage Blob Data Contributor",
       "roleScope": "Private filevault container only",
-      "postprovisionStatus": "Stopped before configuration on strict native root-layer discovery; repaired selector verified against the actual owned recursive graph read-only",
+      "postprovisionStatus": "Recovery succeeded after strict native root-layer discovery repair; owned recursive graph verified",
+      "postprovisionRecoveryExitCode": 0,
+      "identityRoleAssignmentsAcrossSubscription": 1,
+      "authentication": {
+        "mode": "Required",
+        "policyRevision": 1,
+        "appliedRevision": 0,
+        "propagationPending": true,
+        "boundary": "Saved policy only; first activation and protected hosted access are not qualified"
+      },
+      "configuredVariableNames": ["APP_ACCESS_MODE", "AZURE_STORAGE_BLOB_ENDPOINT", "AZURE_STORAGE_CONTAINER"],
       "nativeRootLayerTag": "Present with exact empty string",
       "sourceIntegrationState": "NotConfigured",
       "fullUpQualified": false
     },
-    "livePrerequisitesNotExecuted": ["Postprovision policy/settings recovery", "GitHub authorization/deployment", "Reprovision/redeploy preservation", "Protected visitor and managed-identity Blob CRUD", "Owned-RG teardown"],
+    "liveSourceAccess": {
+      "tool": "Official Builder CLI 0.0.2 doctor with explicit app and repository identity",
+      "exitCode": 1,
+      "githubCliTenantAndArmChecks": "Passed",
+      "sourceIntegrationState": "NotConfigured",
+      "sourceAccess": "The Embr GitHub App is not installed for the selected repository.",
+      "requiredAction": "Human review of GitHub App installation access for the approved test fork only",
+      "sourceOrDeploymentWritesPerformed": false
+    },
+    "livePrerequisitesNotExecuted": ["GitHub authorization/deployment", "Reprovision/redeploy preservation", "Protected visitor and managed-identity Blob CRUD", "Owned-RG teardown"],
     "handoff": {
+      "observed": false,
       "hookExitCode": 3,
       "deploymentStatus": "Succeeded",
       "healthStatus": "AwaitingInteractiveVerification",

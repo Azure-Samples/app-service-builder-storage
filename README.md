@@ -97,9 +97,13 @@ ZIP upload, or automatic GitHub-push deployment.
 **Validation boundary:** local Bicep compilation, schema checks, mocked hook/
 recovery checks, and a real isolated azd lifecycle fixture passed. The fixture
 uses empty credential stores and a rejecting loopback proxy; it performs no
-Azure authentication or deployment. Native infrastructure provisioning and
-read-only ownership/RBAC graph checks also passed in an explicit internal
-East US 2 test; that is not West US 2 qualification. The complete `azd up`
+Azure authentication or deployment. Native infrastructure provisioning,
+postprovision policy/settings recovery, and ownership/RBAC graph checks also
+passed in an explicit internal East US 2 test; that is not West US 2
+qualification. Required sign-in is saved but awaits first activation. The
+official Builder diagnostic currently reports that the Embr GitHub App is not
+installed for the approved test fork; a human must review repository-scoped
+installation access before source connection or deployment. The complete `azd up`
 workflow, GitHub authorization, reprovision preservation, protected hosted CRUD,
 and `azd down` remain unqualified. The earlier hosted ZIP evidence does not
 qualify this path. Do not treat this section as an already verified one-command rollout.
@@ -283,9 +287,8 @@ run cleanup in noninteractive mode. Down remains locally tested only.
 `npm run test:azd` runs offline PowerShell recovery/guard checks and the shared
 real azd fixture; normal `npm test` does not require these optional tools.
 The common PowerShell implementation is intended for macOS/Linux/Windows, but
-only macOS execution has been observed. Live qualification still needs an
-approved dedicated DEV/TEST environment, compatible CLI, real GitHub source
-authorization, reprovision/redeploy preservation checks, human visitor/Blob
+only macOS execution has been observed. Live qualification still needs real
+GitHub source authorization/deployment, reprovision/redeploy preservation checks, human visitor/Blob
 operations, and a separately approved owned-RG cleanup.
 
 ## 1. Provision the Blob dependency (manual path)
