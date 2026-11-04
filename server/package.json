@@ -1,0 +1,16 @@
+{
+  "name": "filevault-api",
+  "version": "1.0.0",
+  "private": true,
+  "engines": { "node": ">=24 <25" },
+  "scripts": {
+    "start": "node index.js",
+    "build:builder": "node stage.js"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.14.1",
+    "@azure/storage-blob": "^12.34.0",
+    "express": "^4.22.3",
+    "multer": "^2.5.0"
+  }
+}

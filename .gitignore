@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.builder-output/
+.env
+.playwright-mcp/
+.azure/

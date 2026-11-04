@@ -1,0 +1,19 @@
+{
+  "name": "app-service-builder-storage",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Private Azure Blob Storage with App Service Builder managed identity",
+  "engines": { "node": ">=24 <25" },
+  "scripts": {
+    "install:components": "npm ci --prefix client && npm ci --prefix server",
+    "dev": "concurrently \"node server/index.js\" \"npm --prefix client run dev\"",
+    "build": "npm --prefix client run build",
+    "build:builder": "node scripts/build.js",
+    "start": "node server/index.js",
+    "test": "node --test test/*.test.js",
+    "verify:storage": "node scripts/verify-storage.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5"
+  }
+}
