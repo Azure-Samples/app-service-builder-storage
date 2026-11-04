@@ -5,7 +5,7 @@ Storage**. Upload, list, filter loaded files, preview raster images, download, a
 delete files without a database, storage account key, connection string, SAS, or
 browser-side Azure token.
 
-This is a DEV/TEST sample for App Service Builder Private Preview, adapted from
+This is a DEV/TEST sample for App Service Builder public preview, adapted from
 the Embr FileVault template. Builder and Blob Storage are independent resources.
 The old built-in storage proxy and its API keys are not used.
 
@@ -21,7 +21,10 @@ Both synthetic files were downloaded with byte-exact comparisons, then deleted.
 **Qualification:** hosted list, upload, pagination, preview, download and delete
 passed in East US 2 on November 3, 2026. The separately approved temporary ZIP
 test qualified hosted source and managed-identity operations, **not GitHub-source
-onboarding**. Published deployment instructions below use GitHub source only.
+runtime activation or West US 2 deployment**. Published deployment instructions
+below use GitHub source only. A separate internal GitHub-source attempt built a
+ready version but failed activation with `AppRuntimeIdentityMismatch`; it is not
+additional hosted functional evidence.
 See [the qualification record](docs/qualification.json) for the deployed source
 and exact scope. This is not production-readiness or support for every preview
 target; a successful `/api/health` check alone does not prove storage access.
@@ -71,7 +74,7 @@ retention, or production rate limiting.
 
 - Azure subscription authorized for Builder in **West US 2 (`westus2`)**, the
   only public customer region. Verify `Microsoft.Web/builderApps` access and
-  **Node.js 24 compute activation** with your preview contact; a successful
+  **Node.js 24 compute activation** for your selected target; a successful
   Node build is not proof of target activation support.
 - Azure CLI with Bicep, Node.js 24 and npm for local development.
 - Permission to provision storage and a resource group; Owner, Role Based
@@ -85,215 +88,16 @@ Use your subscription explicitly in **every Azure command**. Shell placeholders
 below refer only to your newly created test resources; do not reuse or modify
 production resources.
 
-## Optional: Quick deploy with azd (not yet cloud-qualified)
+Fork [this repository](https://github.com/Azure-Samples/app-service-builder-storage)
+into your GitHub account, then clone your copy and run the following steps from
+its root. Keep the root `builder.yaml` and both component directories together:
 
-This additional path keeps the manual steps below available. It provisions a
-**new, dedicated environment resource group** with the same private Storage
-module, a system-assigned Builder identity, and a container-scoped data role.
-PowerShell hooks then configure required Entra sign-in and connect your pushed
-GitHub source. There is no native azd Builder host, App Service substitution,
-ZIP upload, or automatic GitHub-push deployment.
-
-**Validation boundary:** local Bicep compilation, schema checks, mocked hook/
-recovery checks, and a real isolated azd lifecycle fixture passed. The fixture
-uses empty credential stores and a rejecting loopback proxy; it performs no
-Azure authentication or deployment. Native infrastructure provisioning,
-postprovision policy/settings recovery, and ownership/RBAC graph checks also
-passed in an explicit internal East US 2 test; that is not West US 2
-qualification. Human-reviewed GitHub App access and source connection now pass,
-and the exact pushed commit produced a ready immutable version. Runtime activation
-failed with service error `AppRuntimeIdentityMismatch`; the ARM system identity
-remained unchanged. Required sign-in is saved but awaits first activation. The
-accepted operation was resumed from its saved receipt without another deployment;
-observing its terminal failure is not successful runtime recovery. The complete `azd up`
-workflow, GitHub authorization, reprovision preservation, protected hosted CRUD,
-and `azd down` remain unqualified. The earlier hosted ZIP evidence does not
-qualify this path. Do not treat this section as an already verified one-command rollout.
-
-### Tools and interactive inputs
-
-Use an ordinary interactive terminal with Node.js 24, Git, GitHub CLI (`gh`),
-Azure CLI with working Bicep, **azd 1.29.0**, PowerShell **7.4+** (`pwsh`), and a
-compatible **Builder CLI 0.0.2 or newer** with the documented `--name` and
-`--repository-id` flags. The hooks accept azd `>=1.29.0,<2.0.0`; only 1.29.0
-has the real local lifecycle evidence. Local authoring checks used PowerShell
-7.5.2, Azure CLI 2.87.0, Bicep 0.46.1, GitHub CLI 2.102.1 and Node 24.8.0.
-Those are observed versions, not experimentally established minima for every
-tool. Previously installed Builder 0.0.1 was incompatible. The official
-session-local 0.0.2 passed real preprovision capability/account checks and the
-authenticated infrastructure preview passed; source authorization and rollout
-remain unqualified.
-No hook installs or upgrades software.
-
-First fork/copy the complete sample, clone it, and push the source and root
-`builder.yaml` to your chosen branch. From that checkout:
-
-```shell
-azd auth login
-az login --tenant "<tenant-id>"
-builder login --tenant "<tenant-id>"
-gh auth login --hostname github.com
-azd env new "<lowercase-environment-name>"
-azd env set AZURE_SUBSCRIPTION_ID "<devtest-subscription-id>"
-azd env set AZURE_TENANT_ID "<tenant-id>"
-azd env set AZURE_LOCATION westus2
-azd env set STORAGE_LOCATION westus2
-azd env set GITHUB_REPOSITORY "<your-account>/<your-repository>"
-azd env set GITHUB_REF_NAME "<your-pushed-branch>"
-azd env set GITHUB_ACCOUNT "<your-github-login>"
-azd env set BUILDER_ALLOWED_OBJECT_IDS "<visitor-object-id>[,<another-object-id>]"
-azd hooks run preprovision
-azd up
+```bash
+git clone "https://github.com/<your-account>/app-service-builder-storage.git"
+cd app-service-builder-storage
 ```
 
-`azd env new` supplies `AZURE_ENV_NAME`. Use 2-32 lowercase letters/digits/
-hyphens, beginning with a letter. Builder and Storage default to `westus2`,
-the only public customer region. Earlier East US 2 evidence is
-an internal test, not West US 2 qualification or a customer region option.
-Select the same user and tenant for Azure CLI and Builder; the hook checks
-both selected identities. Select
-`GITHUB_ACCOUNT` as the active `gh` account. Azure management sign-in, Builder
-sign-in, GitHub account selection, GitHub App repository installation/SSO, and
-app-visitor Entra consent are separate human actions. The source hook runs
-`builder source login github --account ...` and the explicit source-connect
-command; review browser prompts yourself. No credentials or token caches
-should be copied into this repository or another browser. This path does not
-promise headless CI or Cloud Shell support.
-
-The allowlist contains **object IDs in the selected tenant**, not emails.
-Every allowed visitor shares the container. `GITHUB_SHA` is optional initially:
-the hook resolves the selected remote branch's full SHA and persists it.
-If you set it yourself, it must equal that branch's current pushed commit.
-The source root is always `.` and automatic deployment is disabled.
-
-### Lifecycle, outputs and recovery
-
-**Run `azd hooks run preprovision` before every `azd up` or `azd provision`,
-including previews.** Native azd initializes Bicep parameters before even
-entering a custom up workflow. A workflow hook alone cannot initialize a fresh
-environment or reliably refresh create-versus-reuse parameters before that
-initialization; do not fill generated names or ownership parameters manually.
-
-`azure.yaml` defines the up workflow as **`hooks run preprovision` then
-`provision` then `hooks run predeploy`**. Its first hook rechecks the owned
-parameters before the child provision command. Native `provision` also retains
-its preprovision check; both safely reuse the same ownership receipt.
-There are no services to restore/package. `azd provision` owns only
-infrastructure, identity/RBAC, required visitor policy and the three nonsecret
-server variables. It does not authorize GitHub source or deploy application
-code. The explicit `predeploy` hook performs source connection, exact-commit
-deployment, operation polling, active-version/source verification, and
-anonymous-protection checks.
-Anonymous probes are header-only, have a 30-second timeout, send no credentials
-or cookies, and never follow a sign-in redirect.
-
-**Do not use bare `azd deploy` or `azd deploy --all`.** In the real zero-service
-1.29.0 fixture, native deploy attempted Azure login and failed before either
-deploy hook; explicit `azd hooks run predeploy` executed successfully. Source/
-schema review confirms the custom up workflow shape, not its live provisioning.
-The unauthenticated custom-up fixture also stops at Azure login before its
-workflow; it does not prove bootstrap ordering in a signed-in cloud run.
-
-For standalone infrastructure commands, refresh the derived parameters before
-each native command, not just on the first run:
-
-```shell
-azd hooks run preprovision
-azd provision --preview
-# After reviewing the preview:
-azd hooks run preprovision
-azd provision
-```
-
-If azd cannot find a subscription that the correctly selected Azure CLI user
-can access, its subscription cache may be stale. Use `azd auth login` yourself,
-or select the existing Azure CLI session with an isolated azd configuration:
-set `AZD_CONFIG_DIR` to a new private local directory, run
-`azd config set auth.useAzCliAuth true`, and retain that same directory for
-subsequent commands. This does not sign in, change Azure permissions or copy
-credentials. Select the intended subscription and tenant before retrying.
-
-On successful rollout, the hook records `BUILDER_DEPLOYMENT_STATUS=Succeeded`
-and `BUILDER_AUTH_STATUS=Applied`. It deliberately exits **3**, leaving
-`BUILDER_HEALTH_STATUS=AwaitingInteractiveVerification` and
-`FILEVAULT_CRUD_STATUS=NotRun`. This is a visible handoff, not a claim that 401
-or an activation check proves Blob access. Open `BUILDER_APP_URL`, sign in as
-an allowed visitor, review consent, then follow the real-operation checks below.
-Never suppress the hook failure and report the entire path as qualified.
-
-Selected nonsecret outputs are `AZURE_RESOURCE_GROUP`,
-`BUILDER_APP_NAME`, `BUILDER_APP_RESOURCE_ID`, `BUILDER_APP_PRINCIPAL_ID`,
-`BUILDER_APP_URL`, `BUILDER_APP_DEPLOYMENT_ID`, `BUILDER_APP_VERSION_ID`,
-`GITHUB_SHA`, `AZURE_STORAGE_ACCOUNT`, `AZURE_STORAGE_BLOB_ENDPOINT`,
-`AZURE_STORAGE_CONTAINER`, `STORAGE_CONTAINER_RESOURCE_ID`, and
-`STORAGE_ROLE_ASSIGNMENT_ID`. Infrastructure/source/deployment/auth/health/CRUD
-statuses are separate. Do not publish a full `azd env get-values` dump.
-
-For subsequent code changes, commit and push to the **same branch**, then:
-
-```shell
-azd env set GITHUB_SHA "<new-full-40-character-pushed-commit-sha>"
-azd hooks run predeploy
-```
-
-The hook preserves the owned app/identity/container role and existing source
-connection, retains unknown variable names without reading their values, and
-updates only `APP_ACCESS_MODE`, the Blob endpoint, and container. Repository,
-branch/root, identity, allowlist, ownership or storage-security/firewall drift
-stops instead of silently adopting, widening or overwriting resources.
-The explicit preprovision command refreshes reuse mode before native parameter
-resolution, so subsequent provision skips the Builder resource PUT for an
-existing owned app rather than replacing saved source and variables. Do not
-delete the
-ignored `.azure/<environment>/filevault-builder.json` ownership/operation
-receipt or move an environment to a different subscription.
-
-After an interrupted deployment, run `azd hooks run predeploy` again. Accepted
-operations resume their saved URL; a lost acceptance response replays only the
-same durable request ID/body, never an unrelated deployment. Timeout/throttling
-retains the receipt. A completed deployment with the same SHA only re-observes
-readiness; it does not reconnect, reconfigure or redeploy. Failed/canceled
-rollouts remain recorded; inspect their diagnostics before requesting another
-rollout. An old environment or unrelated existing RG is never adopted.
-
-A lost settings PATCH response is deliberately not treated as success based
-only on returned variable names. Inspect its saved `ConfigurationIntent`,
-resolve any outstanding operation, and verify that no other configuration
-writer is active. To approve replay of that exact nonsecret intent:
-
-```shell
-azd env set FILEVAULT_RECONCILE_CONFIGURATION "<ConfigurationIntent.Id-from-receipt>"
-azd hooks run postprovision
-azd hooks run predeploy
-```
-
-Recovery refuses a changed variable-name inventory. It replays the saved
-values rather than guessing them; the acknowledgment cannot authorize a future
-intent with another ID. Missing/foreign receipts or other drift require human
-reconciliation, not deleting state and retrying against existing resources.
-
-### Guarded cleanup and local checks
-
-`azd down` is **destructive**: it removes the whole generated RG, the app,
-Storage, container/files, container role and deployment records. It leaves your
-GitHub repository/installation and externally owned resources alone. Never
-reuse this RG for other work. The predown hook verifies receipt/context,
-the exact latest native azd deployment ID/hash and ownership parameters,
-recursively checks nested deployment resources, and rejects foreign resources
-in the RG. Unresolved deployment outcomes or ambiguous/incomplete inventories
-block cleanup. It requires the exact RG name in a human terminal **before**
-azd's normal deletion confirmation; review that native scope again. No delete
-occurs in predown. Do not use `--force`, `--purge`, automatic confirmations or
-run cleanup in noninteractive mode. Down remains locally tested only.
-
-`npm run test:azd` runs offline PowerShell recovery/guard checks and the shared
-real azd fixture; normal `npm test` does not require these optional tools.
-The common PowerShell implementation is intended for macOS/Linux/Windows, but
-only macOS execution has been observed. Live qualification still needs real
-GitHub source authorization/deployment, reprovision/redeploy preservation checks, human visitor/Blob
-operations, and a separately approved owned-RG cleanup.
-
-## 1. Provision the Blob dependency (manual path)
+## 1. Provision the Blob dependency
 
 ```bash
 SUBSCRIPTION="<your-approved-devtest-subscription-id>"
@@ -328,7 +132,7 @@ Keep the exact resource IDs in your cleanup inventory.
 Grant only your developer's user principal container access:
 
 ```bash
-DEVELOPER_OBJECT_ID=$(az ad signed-in-user show --query id -o tsv)
+DEVELOPER_OBJECT_ID=$(az ad signed-in-user show --subscription "$SUBSCRIPTION" --query id -o tsv)
 az deployment group create --subscription "$SUBSCRIPTION" --resource-group "$RG" \
   --name filevault-developer-role --template-file infra/role.bicep \
   --parameters storageAccountName="$STORAGE" principalId="$DEVELOPER_OBJECT_ID" principalType=User
@@ -373,10 +177,11 @@ In [App Service Builder Portal](https://builder.appservice.azure.com/):
    **West US 2 (`westus2`)**, the only public customer region. Provision Storage
    there as shown above, and verify Node.js 24 compute support for your
    subscription.
-3. In Access, require work-account sign-in and add the app's system-assigned
-   managed identity. In Authentication, use **Required** sign-in and Entra
+3. On **Identity**, turn on the system-assigned managed identity and select
+   **Save and deploy**. On **Authentication**, use **Required** sign-in and Entra
    **Limit to specific identities**, with your tenant ID plus explicit allowed
-   user object IDs. A tenant-only rule allows everyone in that directory.
+   user object IDs, then **Save**. Use Builder's managed Entra application.
+   A tenant-only rule allows everyone in that directory.
 4. In Variables, set the storage endpoint/container from the Bicep outputs.
    Keep `APP_ACCESS_MODE=builder` or omit it, and leave `AZURE_CLIENT_ID` unset
    for system-assigned identity. Do not add a `VITE_` credential variable.
@@ -473,21 +278,12 @@ Use the actual runtime URL returned by Builder:
    browser, upload, and preview without account tokens, private data or portal
    account details. Store sanitized captures under `docs/assets/`.
 
-For automated testing against an already signed-in app, `FILEVAULT_URL` selects
-the actual HTTPS origin and `FILEVAULT_SESSION_COOKIE` can supply a short-lived
-test session cookie in the process environment. Never put it in source, a
-command argument, a screenshot or logs; clear it afterward.
-
-```bash
-export FILEVAULT_URL="https://<actual-runtime-host>"
-# If required, supply your test session cookie securely in the environment.
-npm run verify:storage
-unset FILEVAULT_SESSION_COOKIE
-```
-
-The script starts with a bounded read, writes one uniquely named synthetic file,
-compares the downloaded bytes, deletes it and verifies its absence. It prints
-only sanitized operation outcomes. Redirects/401/403 are failures, not success.
+Use the signed-in browser for hosted checks; keep session cookies and tokens
+inside that browser. Do not export them into a script or disable Required
+sign-in to run a verifier. The local `npm run verify:storage` helper starts with
+a bounded read, writes one uniquely named synthetic file, compares the downloaded
+bytes, deletes it and verifies its absence. It prints only sanitized operation
+outcomes. Redirects/401/403 are failures, not success.
 Unit tests use an injected storage client; they do not prove Azure reachability.
 
 ## Troubleshooting
@@ -498,7 +294,8 @@ Unit tests use an injected storage client; they do not prove Azure reachability.
 | 401 from FileVault | Configure Required Builder sign-in and use an allowed visitor. Never forge trusted identity headers or enable local mode in Builder. |
 | Storage 503 / underlying 401 or 403 | Confirm deployed identity, principal ID, container role, RBAC propagation and network reachability separately; inspect sanitized server logs. |
 | Works locally, not hosted | Local Azure CLI and hosted managed identity are different principals. Verify hosted RBAC and identity deployment, not just local credentials. |
-| Unsupported Node activation | Confirm Node.js 24 target support with the preview team. Stop; do not repeatedly deploy the same unsupported compute output. |
+| Unsupported Node activation | Confirm Node.js 24 availability for the selected target. Stop; do not repeatedly deploy the same unsupported compute output. |
+| `AppRuntimeIdentityMismatch` | Preserve the deployment ID and contact Builder support for runtime binding diagnosis. A ready build is not activation success; do not replace the identity, widen roles, or blindly retry. |
 | Old endpoint or identity selection | Variable edits require a new version; retained versions keep historical variables. Check active version. |
 | Upload 413 | Maximum size is exactly 10 MiB per file. Split or reduce the file; the UI also limits each queue to 20 files. |
 | Empty/missing files | Check configured account/container and page token; UI filtering covers loaded pages only. Missing containers return 404 instead of being created at runtime. |

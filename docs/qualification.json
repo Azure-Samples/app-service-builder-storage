@@ -4,6 +4,8 @@
   "frontendBuild": "Vite 8",
   "publicCustomerRegion": "westus2",
   "regionalEvidenceBoundary": "Existing East US 2 receipts and screenshots are internal test evidence, not West US 2 qualification or a public customer region option.",
+  "releaseScope": "Manual dependency Bicep and Portal-managed Builder GitHub deployment",
+  "currentReleaseDeploymentQualified": false,
   "localEvidence": {
     "databaseEmulator": false,
     "storage": "Real private Azure Blob container",
@@ -19,91 +21,9 @@
       "assets/filevault-preview.png"
     ]
   },
-  "optionalAzdPath": {
-    "cloudQualified": false,
-    "customerSource": "Committed GitHub source only",
-    "azdVersionObserved": "1.29.0",
-    "lifecycle": {
-      "upWorkflow": ["hooks run preprovision", "provision", "hooks run predeploy"],
-      "requiredBeforeUpOrProvision": "azd hooks run preprovision",
-      "redeployCommand": "azd hooks run predeploy",
-      "explicitHookExitCode": 0,
-      "nativeEmptyServiceDeployExitCode": 1,
-      "nativeDeployHooksExecuted": false,
-      "unauthenticatedCustomUpExitCode": 1,
-      "unauthenticatedCustomUpHooksExecuted": false,
-      "nativeParameterInitialization": "Authenticated provision and up resolve required Bicep parameters before native hooks or the custom up workflow; explicit preprovision is required before every up/provision, including previews. A fresh-input up prompt was canceled before resources, not filled manually.",
-      "isolation": "Fresh credential/config stores; rejecting loopback proxy; all attempted requests blocked",
-      "explicitHookBlockedHosts": ["aka.ms"],
-      "nativeDeployBlockedHosts": ["aka.ms", "login.microsoftonline.com"]
-    },
-    "localChecks": ["Pinned azd schema", "Bicep compilation and emitted resource inspection", "PowerShell parser and mocked recovery/guard checks", "Real loopback anonymous HTTP 302 without redirect following, cookies, credentials or response-body buffering"],
-    "builderCliVersionObserved": "0.0.2",
-    "liveReadOnlyChecks": ["Official session-local Builder capability/account preflight", "Authenticated azd provision --preview", "Native missing-parameter ordering regression and explicit bootstrap recovery"],
-    "liveInfrastructure": {
-      "region": "eastus2",
-      "regionScope": "Explicit internal test only, not public West US 2 qualification",
-      "nativeProvisioningStatus": "Succeeded",
-      "identity": "SystemAssigned",
-      "role": "Storage Blob Data Contributor",
-      "roleScope": "Private filevault container only",
-      "postprovisionStatus": "Recovery succeeded after strict native root-layer discovery repair; owned recursive graph verified",
-      "postprovisionRecoveryExitCode": 0,
-      "identityRoleAssignmentsAcrossSubscription": 1,
-      "authentication": {
-        "mode": "Required",
-        "policyRevision": 1,
-        "appliedRevision": 0,
-        "propagationPending": true,
-        "boundary": "Saved policy only; first activation and protected hosted access are not qualified"
-      },
-      "configuredVariableNames": ["APP_ACCESS_MODE", "AZURE_STORAGE_BLOB_ENDPOINT", "AZURE_STORAGE_CONTAINER"],
-      "nativeRootLayerTag": "Present with exact empty string",
-      "sourceIntegrationState": "Configured",
-      "fullUpQualified": false
-    },
-    "liveSourceAccess": {
-      "tool": "Official Builder CLI 0.0.2 doctor with explicit app and repository identity",
-      "exitCode": 1,
-      "exitCodeBoundary": "Only expected missing app source before connection; installation and collaborator access passed",
-      "githubCliTenantAndArmChecks": "Passed",
-      "sourceIntegrationState": "NotConfigured at diagnostic time; subsequently connected",
-      "sourceAccess": "The Embr App installation and collaborator access are valid.",
-      "humanInstallationReviewCompleted": true,
-      "sourceOrDeploymentWritesPerformed": false
-    },
-    "liveGitHubDeployment": {
-      "sourceIntegrationState": "Configured",
-      "commit": "b8a19b9f6558eda4f0b23e87e4d6540b817013b0",
-      "deploymentId": "dep_20261103_c10c3902731a",
-      "versionId": "ver_20261103_c10c3902731a",
-      "versionStatus": "ready",
-      "versionSourceRevisionVerified": true,
-      "deploymentStatus": "Failed",
-      "failureCode": "AppRuntimeIdentityMismatch",
-      "startedAt": "2026-11-03T22:30:21.1638934Z",
-      "completedAt": "2026-11-03T22:32:26.1325667Z",
-      "activeRuntime": false,
-      "systemAssignedPrincipalUnchanged": true,
-      "acceptedReceiptRecovery": {
-        "localWaitInterruptedOnly": true,
-        "sameRequestDeploymentCommitAndOperationResumed": true,
-        "actualDeploymentHistoryCount": 1,
-        "outcome": "Observed the same accepted operation fail; no duplicate deployment, no successful runtime recovery"
-      }
-    },
-    "livePrerequisitesNotExecuted": ["Successful GitHub runtime activation", "Connected-source reprovision/changed-SHA preservation", "Protected visitor and managed-identity Blob CRUD", "Owned-RG teardown"],
-    "handoff": {
-      "observed": false,
-      "hookExitCode": 3,
-      "deploymentStatus": "Succeeded",
-      "healthStatus": "AwaitingInteractiveVerification",
-      "crudStatus": "NotRun"
-    },
-    "crossPlatform": "Common PowerShell 7 implementation; macOS observed, Windows/Linux not executed"
-  },
   "hostedBuilderQualification": {
     "qualified": true,
+    "evidenceScope": "Historical internal functional test of the recorded source snapshot, not qualification of the current release deployment",
     "managedIdentityStorageOperationsVerified": true,
     "runtimeUrl": "https://asb-filevault-test-20261103-f9b700e6.app.eastus2.builderapps.dev",
     "region": "eastus2",
@@ -114,7 +34,7 @@
     "versionId": "ver_20261103_ef7a7522fce0",
     "deploymentSucceededAt": "2026-11-03T15:50:47.0386479Z",
     "deploymentMethod": "Separately approved temporary ARM ZIP test; not the published onboarding path",
-    "githubSourceOnboardingVerified": false,
+    "githubSourceRuntimeQualified": false,
     "publication": "Fork-based contribution to Azure-Samples/app-service-builder-storage, based on destination main without legacy history. Hosted qualification is independent of GitHub-source onboarding.",
     "deployedSourceCommitLocation": "Retained local validation snapshot, not a canonical Azure-Samples commit",
     "components": [
@@ -169,8 +89,9 @@
       "receipts": "Preserved separately; successful retry did not overwrite the failed attempt"
     },
     "notQualified": [
-      "GitHub-source onboarding",
+      "GitHub-source runtime activation",
       "user-assigned identity alternative",
+      "public West US 2 deployment",
       "different preview regions or runtimes",
       "production readiness"
     ]
